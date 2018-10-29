@@ -5,13 +5,15 @@ using UnityEngine;
 
 public class CameraManager : MonoBehaviour {
 
+	public GameObject firebaseManager;
+
 	private float angle = 0; //回転角
 	private float speed = 3f; //回転速度
 	private float dis = 7; //回転半径
 
 	// Use this for initialization
 	void Start () {
-		
+		//firebaseManager.GetComponent<FirebaseManager>().writeNewScore("userid","name",100);
 	}
 
 	void FixedUpdate(){

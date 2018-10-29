@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "224819356301",
+    "firebase_url": "https://fischer-66e26.firebaseio.com",
+    "project_id": "fischer-66e26",
+    "storage_bucket": "fischer-66e26.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224819356301:android:d3c01aae32481f7d",
+        "android_client_info": {
+          "package_name": "com.Lame.Fischer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "224819356301-0m1rrv4kbqoo8iqtqh7857kcut90n3ho.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3E2Uq0GeXLSKV8lWQkaLuC4yTxt_E32M"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
