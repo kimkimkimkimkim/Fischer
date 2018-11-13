@@ -4,8 +4,14 @@ using UnityEngine;
 using Firebase;
 using Firebase.Database;
 using Firebase.Unity.Editor;
+using UnityEngine.UI;
+using TMPro;
 
 public class MachingManager : MonoBehaviour {
+
+	public GameObject textMain; //メインテキスト
+	public GameObject textNumber; //数字テキスト
+	public GameObject keybord; //キーボード
 
 	private GameObject indicator;
 	private DatabaseReference reference;
@@ -56,14 +62,15 @@ public class MachingManager : MonoBehaviour {
 	private void searchRoom(){
 		//部屋の中に一人しかいない時OK
 		FirebaseDatabase.DefaultInstance
-		.GetReference("onlineroom")
+		.GetReference("online")
 		.GetValueAsync().ContinueWith(task => {
 			if (task.IsFaulted) {
 				
 			}
 			else if (task.IsCompleted) {
 				DataSnapshot snapshot = task.Result;
-				IEnumerator<DataSnapshot> en = snapshot.Children.GetEnumerator();;
+
+				IEnumerator<DataSnapshot> en = snapshot.Child("room").Children.GetEnumerator();;
 
 				while (en.MoveNext()) {
 					DataSnapshot data = en.Current;
@@ -82,7 +89,6 @@ public class MachingManager : MonoBehaviour {
 
 				//空いてる部屋がない
 				if(isLastRoom){
-					Debug.Log("部屋を作成");
 					//部屋の作成
 					createRoom();
 				}
@@ -97,7 +103,7 @@ public class MachingManager : MonoBehaviour {
 		//自分の情報をjson形式で保存
 		string json = "{\"name\":\"challenger\",\"rate\":1500}";
 		//部屋に自分の情報を反映
-		reference.Child("onlineroom").Child(roomnum.ToString()).Child("challengerid").SetRawJsonValueAsync(json);
+		reference.Child("online").Child("room").Child(roomnum.ToString()).Child("challengerid").SetRawJsonValueAsync(json);
 
 		//ゲームスタート
 		gameStart();
@@ -105,17 +111,44 @@ public class MachingManager : MonoBehaviour {
 
 	//部屋を作成
 	private void createRoom(){
-		int roomnum = PlayerPrefs.GetInt("roomnum") + 1;
-		PlayerPrefs.SetInt("roomnum",roomnum);
+		int roomnum=0;
+		//部屋の中に一人しかいない時OK
+		FirebaseDatabase.DefaultInstance
+		.GetReference("online")
+		.GetValueAsync().ContinueWith(task => {
+			if (task.IsFaulted) {
+				
+			}
+			else if (task.IsCompleted) {
+				//Firebaseから今ある部屋数を取得してそれに一足した部屋番号の部屋を作成
+				DataSnapshot snapshot = task.Result;
+				roomnum = int.Parse(snapshot.Child("roomnum").Value.ToString()) + 1;
+				reference.Child("online").Child("roomnum").SetValueAsync(roomnum);
 
-		//自分の情報をjson形式で保存
-		string json = "{\"host\":\"hostman\",\"rate\":1500}";
-		//部屋に自分の情報を反映
-		reference.Child("onlineroom").Child(roomnum.ToString()).Child("hostid").SetRawJsonValueAsync(json);
+				//自分の情報をjson形式で保存
+				string json = "{\"host\":\"hostman\",\"rate\":1500}";
+				//部屋に自分の情報を反映
+				reference.Child("online").Child("room").
+					Child(roomnum.ToString()).Child("hostid").SetRawJsonValueAsync(json);
+				Debug.Log(roomnum+"の部屋を作成");
+			}
+		});
+		waitMember();
+	}
+
+	private void waitMember(){
+		
 	}
 
 	//ゲームスタート
 	private void gameStart(){
 
+		//インジケーターの非表示
+		indicator.GetComponent<ActivityIndicator>().Hide();
+
+		//自分のナンバーを設定する
+		textNumber.SetActive(false);
+		textMain.GetComponent<Text>().text = "プレイヤーが揃いました。\nナンバーをセットして対戦を開始してください。";
+		keybord.SetActive(true);
 	}
 }
