@@ -48,7 +48,7 @@ public class KeybordManager : MonoBehaviour {
 
 
 	public void OnClick(int num){
-		if(PlayerPrefs.GetInt("myturn") == 0)return;
+		if(PlayerPrefs.GetInt("gamestart") == 1 && PlayerPrefs.GetInt("myturn") == 0 )return;
 		if(num==10){
 			Call();
 			return;
@@ -98,7 +98,15 @@ public class KeybordManager : MonoBehaviour {
 
 	//設定ナンバー決定
 	private void DecideSettingNum(){
-		Dictionary<string,object> number = new Dictionary<string, object>(){{"number",callnum}};
+		Dictionary<string, object> data = new Dictionary<string, object>(){
+			{"eat",0},
+			{"bite",0},
+			{"callnum","000"}
+		};
+		Dictionary<string,object> number = new Dictionary<string, object>(){
+			{"number",callnum},
+			{"data",data},
+		};
 		PlayerPrefs.SetString("usernum",callnum);
 		reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
 			Child(PlayerPrefs.GetString("userid")).UpdateChildrenAsync(number);
@@ -150,6 +158,9 @@ public class KeybordManager : MonoBehaviour {
     }
 
 	private void GameStart(){
+		textMain.SetActive(true);
+		textNumber.SetActive(false);
+		textMain.GetComponent<Text>().text = "マッチングしました";
 		for(int i=0;i<3;i++){
 			GameObject card = userCard.transform.GetChild(i).gameObject;
 			char c = callnum[i];

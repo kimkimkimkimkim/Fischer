@@ -59,7 +59,7 @@ public class MachingManager : MonoBehaviour {
 		referenceObject();
 
 		//インジケーターの表示
-		indicator.GetComponent<ActivityIndicator>().Show();
+		//indicator.GetComponent<ActivityIndicator>().Show();
 
 		//userid設定
 		userid = PlayerPrefs.GetString("userid");
@@ -102,7 +102,6 @@ public class MachingManager : MonoBehaviour {
 					string name = (string)data.Child("name").Value;
 					int score   = (int)(long)data.Child("score").Value;
 					*/
-					Debug.Log("部屋検索中");
 					if(data.ChildrenCount == 1 ){
 						Debug.Log("一人の部屋発見");
 						Dictionary<string,object> user = new Dictionary<string, object>();
@@ -113,7 +112,7 @@ public class MachingManager : MonoBehaviour {
 						}
 						//Debug.Log(key_userid);
 						if(key_userid != PlayerPrefs.GetString("userid")){
-							Debug.Log("人の部屋に入ります");
+							Debug.Log("他人の部屋に入ります");
 							//部屋に一人しかいないかつその一人が自分じゃない
 							PlayerPrefs.SetString("enemyid",key_userid);
 							PlayerPrefs.SetString("roomnum_str",data.Key);

@@ -13,6 +13,7 @@ public class OnlineGameManager : MonoBehaviour {
 	public GameObject textNumber; //数字テキスト
 	public GameObject textResult; //eatbiteの結果を表示するテキスト
 	public GameObject keybord; //キーボード
+	public GameObject imageResult; //結果画面
 
 	private DatabaseReference reference;
 
@@ -84,11 +85,61 @@ public class OnlineGameManager : MonoBehaviour {
 		textResult.SetActive(false);
 		textMain.GetComponent<Text>().text = "相手のターンです";
 
+		var ref_online = FirebaseDatabase.DefaultInstance
+      		.GetReference("online");
+
+      	ref_online.Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
+		  	Child(PlayerPrefs.GetString("enemyid")).ChildChanged += HandleChildChanged;
 	}
 
-	public void CallNum(string callnum){
+	void HandleChildChanged(object sender, ChildChangedEventArgs args) {
+      if (args.DatabaseError != null) {
+        Debug.LogError(args.DatabaseError.Message);
+        return;
+      }
+      // Do something with the data in args.Snapshot
+	  Debug.Log(args.Snapshot);
+	  if(args.Snapshot.Key == "data"){
+		//相手がナンバーをコールしたらそのナンバーとeatbiteを取得
+		FirebaseDatabase.DefaultInstance
+		.GetReference("online")
+		.GetValueAsync().ContinueWith(task => {
+			if (task.IsFaulted) {
+				
+			}
+			else if (task.IsCompleted) {
+				DataSnapshot snapshot = task.Result;
+				Dictionary<string, object> data = new Dictionary<string, object>();
+				data = snapshot.Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
+					Child(PlayerPrefs.GetString("enemyid")).Child("data").Value as Dictionary<string, object>;
 
-	}
+				Debug.Log(data);
+				
+				textMain.SetActive(false);
+				textNumber.SetActive(false);
+				textResult.SetActive(true);
+				textResult.transform.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>().text = data["callnum"].ToString();
+				textResult.transform.GetChild(1).gameObject.GetComponent<TextMeshProUGUI>().text = data["eat"].ToString();
+				textResult.transform.GetChild(2).gameObject.GetComponent<TextMeshProUGUI>().text = data["bite"].ToString();
+
+				reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
+					Child(PlayerPrefs.GetString("userid")).Child("myturn").SetValueAsync(1);
+				PlayerPrefs.SetInt("myturn",1);
+
+				if(int.Parse(data["eat"].ToString()) == 3){
+					Debug.Log("lose");
+					Invoke("ShowLose",1.5f);
+				}else{
+					Invoke("Offense",2.5f);
+				}
+
+			}
+		});
+	  }
+
+    }
+
+
 
 	public void JudgeEatBite(string callnum){
 		int eat=0,bite=0;
@@ -109,6 +160,44 @@ public class OnlineGameManager : MonoBehaviour {
 		Debug.Log("enemynum:" + enemynum + " callnum:" + callnum);
 		Debug.Log("eat:" + eat + " bite:" + bite);
 
+		Dictionary<string,object> data = new Dictionary<string, object>(){
+			{"eat",eat},
+			{"bite",bite},
+			{"callnum",callnum}
+		};
+		reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
+			Child(PlayerPrefs.GetString("userid")).Child("data").UpdateChildrenAsync(data);
+		reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
+			Child(PlayerPrefs.GetString("userid")).Child("myturn").SetValueAsync(0);
+
+		textMain.SetActive(false);
+		textNumber.SetActive(false);
+		textResult.SetActive(true);
+		textResult.transform.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>().text = callnum;
+		textResult.transform.GetChild(1).gameObject.GetComponent<TextMeshProUGUI>().text = eat.ToString();
+		textResult.transform.GetChild(2).gameObject.GetComponent<TextMeshProUGUI>().text = bite.ToString();
+
+		if(eat == 3){
+			Debug.Log("win");
+			Invoke("ShowWin",1.5f);
+		}else{
+			Invoke("Defense",2.5f);
+		}
+
+	}
+
+	private void ShowWin(){
+		imageResult.SetActive(true);
+		imageResult.transform.Find("Text").gameObject.GetComponent<Text>().text = "WIN";
+		imageResult.transform.Find("Text").gameObject.GetComponent<Text>().color = Color.red;
+		iTween.MoveFrom(imageResult, iTween.Hash("x",5,"time",1));
+	}
+
+	private void ShowLose(){
+		imageResult.SetActive(true);
+		imageResult.transform.Find("Text").gameObject.GetComponent<Text>().text = "LOSE";
+		imageResult.transform.Find("Text").gameObject.GetComponent<Text>().color = Color.blue;
+		iTween.MoveFrom(imageResult, iTween.Hash("x",5,"time",1));
 	}
 
 }
