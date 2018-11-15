@@ -64,8 +64,16 @@ public class MachingManager : MonoBehaviour {
 		//userid設定
 		userid = PlayerPrefs.GetString("userid");
 
+		textMain.SetActive(true);
+		textNumber.SetActive(false);
+		textMain.GetComponent<Text>().text = "マッチング中...";
+
+		PlayerPrefs.SetInt("gamestart",0);
+
 		//マッチング開始
 		searchRoom();
+		
+
 		
 	}
 
@@ -94,26 +102,30 @@ public class MachingManager : MonoBehaviour {
 					string name = (string)data.Child("name").Value;
 					int score   = (int)(long)data.Child("score").Value;
 					*/
+					Debug.Log("部屋検索中");
 					if(data.ChildrenCount == 1 ){
+						Debug.Log("一人の部屋発見");
 						Dictionary<string,object> user = new Dictionary<string, object>();
 						user = data.Value as Dictionary<string,object>;
 						string key_userid = "";
 						foreach (string key in user.Keys) {
 							key_userid = key;
 						}
-						Debug.Log(key_userid);
+						//Debug.Log(key_userid);
 						if(key_userid != PlayerPrefs.GetString("userid")){
+							Debug.Log("人の部屋に入ります");
 							//部屋に一人しかいないかつその一人が自分じゃない
 							PlayerPrefs.SetString("enemyid",key_userid);
+							PlayerPrefs.SetString("roomnum_str",data.Key);
 							roomnum_str = data.Key;
-							intoTheRoom(int.Parse(data.Key));
+							intoTheRoom();
 							Debug.Log(data.Key + "の部屋に参加");
 							isLastRoom = false;
 							break;
 						}else{
 							//部屋に一人しかいないけどその一人が自分
 							Debug.Log("自分が作った部屋に入りました");
-							waitMember(int.Parse(data.Key));
+							waitMember();
 							isLastRoom = false;
 							break;
 						}
@@ -132,14 +144,30 @@ public class MachingManager : MonoBehaviour {
 	}
 
 	//部屋に入る
-	private void intoTheRoom(int roomnum){
-		//自分の情報をjson形式で保存
-		string json = "{\"name\":\"challenger\",\"rate\":1500}";
-		//部屋に自分の情報を反映
-		reference.Child("online").Child("room").Child(roomnum.ToString()).Child(userid).SetRawJsonValueAsync(json);
+	private void intoTheRoom(){
 
-		//ゲームスタート
-		gameStart();
+		FirebaseDatabase.DefaultInstance
+		.GetReference("online")
+		.GetValueAsync().ContinueWith(task => {
+			if (task.IsFaulted) {
+				
+			}
+			else if (task.IsCompleted) {
+				DataSnapshot snapshot = task.Result;
+				Debug.Log((int)(long)snapshot.Child("room").Child(PlayerPrefs.GetString("roomnum_str")).Child(PlayerPrefs.GetString("enemyid")).Child("myturn").Value);
+				int myturn = (int)(long)snapshot.Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
+					Child(PlayerPrefs.GetString("enemyid")).Child("myturn").Value * -1 + 1;
+				PlayerPrefs.SetInt("myturn",myturn);
+
+				//自分の情報をjson形式で保存
+				string json = "{\"name\":\"challenger\",\"rate\":1500,\"myturn\":" +  myturn + "}";
+				//部屋に自分の情報を反映
+				reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).Child(userid).SetRawJsonValueAsync(json);
+
+				//ゲームスタート
+				gameStart();
+			}
+		});
 	}
 
 	//部屋を作成
@@ -156,26 +184,28 @@ public class MachingManager : MonoBehaviour {
 				//Firebaseから今ある部屋数を取得してそれに一足した部屋番号の部屋を作成
 				DataSnapshot snapshot = task.Result;
 				roomnum = int.Parse(snapshot.Child("roomnum").Value.ToString()) + 1;
-				roomnum_str = roomnum.ToString();
+				PlayerPrefs.SetString("roomnum_str",roomnum.ToString());
 				reference.Child("online").Child("roomnum").SetValueAsync(roomnum);
 
 				//自分の情報をjson形式で保存
-				string json = "{\"host\":\"hostman\",\"rate\":1500}";
+				int myturn = Random.Range(0,2); //0~1
+				PlayerPrefs.SetInt("myturn",myturn);
+				string json = "{\"name\":\"hostman\",\"rate\":1500,\"myturn\":"+ myturn + "}";
 				//部屋に自分の情報を反映
 				reference.Child("online").Child("room").
 					Child(roomnum.ToString()).Child(userid).SetRawJsonValueAsync(json);
 				Debug.Log(roomnum+"の部屋を作成");
-				waitMember(roomnum);
+				waitMember();
 			}
 		});
 	}
 
-	private void waitMember(int roomnum){
+	private void waitMember(){
 		Debug.Log("入ってくるのを待ってます");
 		var ref_online = FirebaseDatabase.DefaultInstance
       		.GetReference("online");
 
-      	ref_online.Child("room").Child(roomnum.ToString()).ChildAdded += HandleChildAdded;
+      	ref_online.Child("room").Child(PlayerPrefs.GetString("roomnum_str")).ChildAdded += HandleChildAdded;
 	}
 
 	void HandleChildAdded(object sender, ChildChangedEventArgs args) {
@@ -204,6 +234,5 @@ public class MachingManager : MonoBehaviour {
 		textNumber.SetActive(false);
 		textMain.GetComponent<Text>().text = "プレイヤーが揃いました。\nナンバーをセットして対戦を開始してください。";
 		keybord.SetActive(true);
-		keybord.GetComponent<KeybordManager>().GetRef(roomnum_str);
 	}
 }

@@ -13,10 +13,10 @@ public class KeybordManager : MonoBehaviour {
 	public GameObject textNumber; //数字テキスト
 	public GameObject userCard; 
 	public GameObject imageBackground; //背景
+	public GameObject onlineGameManager; //OnlineGameManager
 	public Sprite[] cardSprite = new Sprite[10]; //カードの画像
 	private DatabaseReference reference;
 	private DatabaseReference refRoom; //部屋までのref
-	private string roomnum_str = "";
 
 	private string callnum = "";
 	private int count = 0; //今何番目の数字か
@@ -46,11 +46,9 @@ public class KeybordManager : MonoBehaviour {
 		});
 	}
 
-	public void GetRef(string room){
-		roomnum_str = room;
-	}
 
 	public void OnClick(int num){
+		if(PlayerPrefs.GetInt("myturn") == 0)return;
 		if(num==10){
 			Call();
 			return;
@@ -69,7 +67,13 @@ public class KeybordManager : MonoBehaviour {
 	private void Call(){
 		if(count!=3)return;
 		//コールの処理
-		DecideSettingNum();
+		if(PlayerPrefs.GetInt("gamestart") == 0){
+			DecideSettingNum();
+		}else{
+			onlineGameManager.GetComponent<OnlineGameManager>().JudgeEatBite(callnum);
+			callnum="";
+			count=0;
+		}
 	}
 
 	private void Reset(){
@@ -83,13 +87,20 @@ public class KeybordManager : MonoBehaviour {
 	private void Render(){
 		textMain.SetActive(false);
 		textNumber.SetActive(true);
-		textNumber.GetComponent<TextMeshProUGUI>().text = callnum;
+		for(int i=0;i<count;i++){
+			textNumber.transform.GetChild(i).gameObject.GetComponent<TextMeshProUGUI>().text
+				= callnum[i].ToString();
+		}
+		for(int i=count;i<3;i++){
+			textNumber.transform.GetChild(i).gameObject.GetComponent<TextMeshProUGUI>().text = "";
+		}
 	}
 
 	//設定ナンバー決定
 	private void DecideSettingNum(){
 		Dictionary<string,object> number = new Dictionary<string, object>(){{"number",callnum}};
-		reference.Child("online").Child("room").Child(roomnum_str).
+		PlayerPrefs.SetString("usernum",callnum);
+		reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
 			Child(PlayerPrefs.GetString("userid")).UpdateChildrenAsync(number);
 		
 		FirebaseDatabase.DefaultInstance
@@ -101,12 +112,14 @@ public class KeybordManager : MonoBehaviour {
 				else if (task.IsCompleted) {
 					DataSnapshot snapshot = task.Result;
 					// Do something with snapshot...
-					if(snapshot.Child("room").Child(roomnum_str).
+					if(snapshot.Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
 						Child(PlayerPrefs.GetString("enemyid")).Child("number").Value == null){
 						//相手はまだ入力中
 						WaitEnemy();
 					}else{
 						//相手の入力が終了している
+						PlayerPrefs.SetString("enemynum",snapshot.Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
+						Child(PlayerPrefs.GetString("enemyid")).Child("number").Value.ToString());
 						GameStart();
 					}
 				}
@@ -117,7 +130,7 @@ public class KeybordManager : MonoBehaviour {
 		textMain.SetActive(true);
 		textNumber.SetActive(false);
 		textMain.GetComponent<Text>().text = "対戦相手が決めるまでもう少しお待ちください";
-		reference.Child("online").Child("room").Child(roomnum_str).
+		reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
 			Child(PlayerPrefs.GetString("enemyid")).ChildAdded += HandleChildAdded;
 	}
 
@@ -129,6 +142,7 @@ public class KeybordManager : MonoBehaviour {
       // Do something with the data in args.Snapshot
 	  Debug.Log(args.Snapshot);
 	  if(args.Snapshot.Key == "number"){
+		  PlayerPrefs.SetString("enemynum",args.Snapshot.Value.ToString());
 		  //敵のナンバー決定終了
 		  GameStart();
 	  }
@@ -157,6 +171,9 @@ public class KeybordManager : MonoBehaviour {
 		textNumber.SetActive(false);
 		textMain.SetActive(true);
 		textMain.GetComponent<Text>().text = "Game Start!";
+		callnum = "";
+		count = 0;
+		onlineGameManager.GetComponent<OnlineGameManager>().GameStart();
 	}
 
 
