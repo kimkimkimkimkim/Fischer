@@ -12,6 +12,7 @@ public class MachingManager : MonoBehaviour {
 	public GameObject textMain; //メインテキスト
 	public GameObject textNumber; //数字テキスト
 	public GameObject keybord; //キーボード
+	public GameObject timeSlider; //タイマー
 
 	private GameObject indicator;
 	private DatabaseReference reference;
@@ -233,5 +234,9 @@ public class MachingManager : MonoBehaviour {
 		textNumber.SetActive(false);
 		textMain.GetComponent<Text>().text = "プレイヤーが揃いました。\nナンバーをセットして対戦を開始してください。";
 		keybord.SetActive(true);
+
+		timeSlider.GetComponent<TimerManager>().SetTimer(15,1);
 	}
+
+
 }

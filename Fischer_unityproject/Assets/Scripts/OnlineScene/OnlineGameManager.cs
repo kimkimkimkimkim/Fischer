@@ -59,6 +59,7 @@ public class OnlineGameManager : MonoBehaviour {
 
 	public void GameStart(){
 		PlayerPrefs.SetInt("gamestart",1);
+
 		//先攻後攻を決める
 		if(PlayerPrefs.GetInt("myturn") == 1){
 			Debug.Log("先攻");
@@ -69,9 +70,12 @@ public class OnlineGameManager : MonoBehaviour {
 			//後攻
 			Defense();
 		}
+
 	}
 	
 	private void Offense(){
+		
+
 		textMain.SetActive(true);
 		textNumber.SetActive(false);
 		textResult.SetActive(false);

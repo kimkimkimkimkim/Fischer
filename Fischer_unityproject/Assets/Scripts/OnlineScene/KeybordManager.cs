@@ -18,7 +18,7 @@ public class KeybordManager : MonoBehaviour {
 	private DatabaseReference reference;
 	private DatabaseReference refRoom; //部屋までのref
 
-	private string callnum = "";
+	public string callnum = "";
 	private int count = 0; //今何番目の数字か
 
 	private void Start(){
@@ -97,17 +97,22 @@ public class KeybordManager : MonoBehaviour {
 	}
 
 	//設定ナンバー決定
-	private void DecideSettingNum(){
+	public void DecideSettingNum(string callnum_str = ""){
+		if(callnum_str == ""){
+			callnum_str = callnum;
+		}else{
+			callnum = callnum_str;
+		}
 		Dictionary<string, object> data = new Dictionary<string, object>(){
 			{"eat",0},
 			{"bite",0},
 			{"callnum","000"}
 		};
 		Dictionary<string,object> number = new Dictionary<string, object>(){
-			{"number",callnum},
+			{"number",callnum_str},
 			{"data",data},
 		};
-		PlayerPrefs.SetString("usernum",callnum);
+		PlayerPrefs.SetString("usernum",callnum_str);
 		reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
 			Child(PlayerPrefs.GetString("userid")).UpdateChildrenAsync(number);
 		
