@@ -16,6 +16,8 @@ public class OnlineGameManager : MonoBehaviour {
 	public GameObject imageResult; //結果画面
 
 	private DatabaseReference reference;
+	private DatabaseReference refEnemy;
+	private DatabaseReference refUser;
 
 	/*	PlayerPrefs
 	 {
@@ -26,6 +28,9 @@ public class OnlineGameManager : MonoBehaviour {
 		 "gamestart", int
 		 "usernum", string
 		 "enemynum", string
+		 "state", int
+		 "isGamestartUser", int
+		 "isGamestartEnemy", int
 	 }
 	 */
 
@@ -53,13 +58,17 @@ public class OnlineGameManager : MonoBehaviour {
 		    // Firebase Unity SDK is not safe to use here.
 		  }
 		});
-
-
 	}
 
 	public void GameStart(){
 		PlayerPrefs.SetInt("gamestart",1);
+		refEnemy = reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).Child(PlayerPrefs.GetString("enemyid"));
+		refUser = reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).Child(PlayerPrefs.GetString("userid"));
+		FirebaseDatabase.DefaultInstance.GetReference("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
+		  	Child(PlayerPrefs.GetString("enemyid")).ChildChanged += HandleChildChanged;
 
+		Ready ();
+		/* 
 		//先攻後攻を決める
 		if(PlayerPrefs.GetInt("myturn") == 1){
 			Debug.Log("先攻");
@@ -70,30 +79,69 @@ public class OnlineGameManager : MonoBehaviour {
 			//後攻
 			Defense();
 		}
+		*/
 
+	}
+
+	private void Ready(){
+		//stateに1を保存
+		refUser.Child("isGamestart").SetValueAsync(1);
+		PlayerPrefs.SetInt("isGamestartUser",1);
+
+		if(PlayerPrefs.GetInt("isGamestartEnemy") == 1){
+			if(PlayerPrefs.GetInt("myturn") == 1){
+				//攻撃
+				textMain.SetActive(true);
+				textNumber.SetActive(false);
+				textResult.SetActive(false);
+				textMain.GetComponent<Text>().text = "あなたのターンです";
+				PlayerPrefs.SetInt("isGamestartUser",0);
+				PlayerPrefs.SetInt("isGamestartEnemy",0);
+				keybord.SetActive(true);
+			}else{
+				//守備
+				textMain.SetActive(true);
+				textNumber.SetActive(false);
+				textResult.SetActive(false);
+				textMain.GetComponent<Text>().text = "相手のターンです";
+				PlayerPrefs.SetInt("isGamestartUser",0);
+				PlayerPrefs.SetInt("isGamestartEnemy",0);
+				keybord.SetActive(false);
+			}
+		}
 	}
 	
 	private void Offense(){
-		
+		//stateに1を保存
+		refUser.Child("isGamestart").SetValueAsync(1);
+		PlayerPrefs.SetInt("isGamestartUser",1);
 
+
+
+		/* 
 		textMain.SetActive(true);
 		textNumber.SetActive(false);
 		textResult.SetActive(false);
 		textMain.GetComponent<Text>().text = "あなたのターンです";
+		*/
 
 	}
 
 	private void Defense(){
+
+		/* 
 		textMain.SetActive(true);
 		textNumber.SetActive(false);
 		textResult.SetActive(false);
 		textMain.GetComponent<Text>().text = "相手のターンです";
-
+		*/
+		/*
 		var ref_online = FirebaseDatabase.DefaultInstance
       		.GetReference("online");
 
       	ref_online.Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
 		  	Child(PlayerPrefs.GetString("enemyid")).ChildChanged += HandleChildChanged;
+			  */
 	}
 
 	void HandleChildChanged(object sender, ChildChangedEventArgs args) {
@@ -103,6 +151,32 @@ public class OnlineGameManager : MonoBehaviour {
       }
       // Do something with the data in args.Snapshot
 	  Debug.Log(args.Snapshot);
+	  if(args.Snapshot.Key == "isGamestart"){
+		if((int)(long)args.Snapshot.Value == 1){
+			PlayerPrefs.SetInt("isGamestartEnemy",1);
+			if(PlayerPrefs.GetInt("isGamestartUser") == 1){
+				if(PlayerPrefs.GetInt("myturn") == 1){
+					//攻撃
+					textMain.SetActive(true);
+					textNumber.SetActive(false);
+					textResult.SetActive(false);
+					textMain.GetComponent<Text>().text = "あなたのターンです";
+					PlayerPrefs.SetInt("isGamestartUser",0);
+					PlayerPrefs.SetInt("isGamestartEnemy",0);
+					keybord.SetActive(true);
+				}else{
+					//守備
+					textMain.SetActive(true);
+					textNumber.SetActive(false);
+					textResult.SetActive(false);
+					textMain.GetComponent<Text>().text = "相手のターンです";
+					PlayerPrefs.SetInt("isGamestartUser",0);
+					PlayerPrefs.SetInt("isGamestartEnemy",0);
+					keybord.SetActive(false);
+				}
+			}
+		}
+	  }
 	  if(args.Snapshot.Key == "data"){
 		//相手がナンバーをコールしたらそのナンバーとeatbiteを取得
 		FirebaseDatabase.DefaultInstance
@@ -134,7 +208,8 @@ public class OnlineGameManager : MonoBehaviour {
 					Debug.Log("lose");
 					Invoke("ShowLose",1.5f);
 				}else{
-					Invoke("Offense",2.5f);
+					PlayerPrefs.SetInt("myturn",1);
+					Invoke("Ready",2.5f);
 				}
 
 			}
@@ -185,7 +260,8 @@ public class OnlineGameManager : MonoBehaviour {
 			Debug.Log("win");
 			Invoke("ShowWin",1.5f);
 		}else{
-			Invoke("Defense",2.5f);
+			PlayerPrefs.SetInt("myturn",0);
+			Invoke("Ready",2.5f);
 		}
 
 	}

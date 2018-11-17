@@ -4131,6 +4131,7 @@ MonoBehaviour:
   userCard: {fileID: 2113270832}
   imageBackground: {fileID: 843649460}
   onlineGameManager: {fileID: 1818246923}
+  timeSlider: {fileID: 1269996050}
   cardSprite:
   - {fileID: 21300000, guid: 0a669c47ce61f43cba7ab5f510ccf014, type: 3}
   - {fileID: 21300000, guid: d1c7d77495c3e4c339a6f7443d487f4f, type: 3}
@@ -4312,6 +4313,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   keybordManager: {fileID: 1180824836}
+  isStart: 0
 --- !u!1 &1285408883
 GameObject:
   m_ObjectHideFlags: 0

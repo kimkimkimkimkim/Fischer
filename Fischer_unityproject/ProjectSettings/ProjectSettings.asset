@@ -655,9 +655,9 @@ PlayerSettings:
     UNet: 1
   facebookSdkVersion: 7.9.4
   apiCompatibilityLevel: 2
-  cloudProjectId: 1ec331c6-d308-4c7d-916b-8a53c997098f
+  cloudProjectId: a70eb2da-8234-4ea1-a0c5-04d409e84b48
   projectName: Fischer_unityproject
-  organizationId: unity_scl6dff22iujaw
+  organizationId: ii-aatj-ntocl
   cloudEnabled: 0
   enableNativePlatformBackendsForNewInputSystem: 0
   disableOldInputManagerSupport: 0

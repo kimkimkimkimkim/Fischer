@@ -14,6 +14,7 @@ public class KeybordManager : MonoBehaviour {
 	public GameObject userCard; 
 	public GameObject imageBackground; //背景
 	public GameObject onlineGameManager; //OnlineGameManager
+	public GameObject timeSlider; //タイマー
 	public Sprite[] cardSprite = new Sprite[10]; //カードの画像
 	private DatabaseReference reference;
 	private DatabaseReference refRoom; //部屋までのref
@@ -98,6 +99,7 @@ public class KeybordManager : MonoBehaviour {
 
 	//設定ナンバー決定
 	public void DecideSettingNum(string callnum_str = ""){
+		timeSlider.GetComponent<TimerManager>().isStart = false;
 		if(callnum_str == ""){
 			callnum_str = callnum;
 		}else{
@@ -111,7 +113,9 @@ public class KeybordManager : MonoBehaviour {
 		Dictionary<string,object> number = new Dictionary<string, object>(){
 			{"number",callnum_str},
 			{"data",data},
+			{"isGamestart",0},
 		};
+		PlayerPrefs.SetInt("state",0);
 		PlayerPrefs.SetString("usernum",callnum_str);
 		reference.Child("online").Child("room").Child(PlayerPrefs.GetString("roomnum_str")).
 			Child(PlayerPrefs.GetString("userid")).UpdateChildrenAsync(number);

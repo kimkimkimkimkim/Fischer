@@ -9,7 +9,7 @@ public class TimerManager : MonoBehaviour {
 
 	public GameObject keybordManager;
 
-	private bool isStart = false;
+	public bool isStart = false;
 	private float t = 0;
 	private int methodNum = 0;
 
